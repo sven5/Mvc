@@ -11,6 +11,8 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Testing;
 using Xunit;
 
@@ -1267,6 +1269,25 @@ Microsoft.AspNetCore.Mvc.ViewFeatures.ViewDataDictionary`1[AspNetCore.InjectedPa
 
             // Assert
             Assert.Equal(expected, content);
+        }
+
+        [Theory]
+        [InlineData("FromHandlerMethod")]
+        [InlineData(nameof(IAuthorizationFilter.OnAuthorization))]
+        [InlineData(nameof(IAsyncAuthorizationFilter.OnAuthorizationAsync))]
+        [InlineData(nameof(IResourceFilter.OnResourceExecuting))]
+        [InlineData(nameof(IAsyncResourceFilter.OnResourceExecutionAsync))]
+        [InlineData(nameof(IPageFilter.OnPageHandlerExecuting))]
+        [InlineData(nameof(IAsyncPageFilter.OnPageHandlerExecutionAsync))]
+        [InlineData(nameof(IResultFilter.OnResultExecuting))]
+        [InlineData(nameof(IAsyncResultFilter.OnResultExecutionAsync))]
+        public async Task ShortCircuiting_PageHandler_Works(string targetName)
+        {
+            // Act
+            var content = await Client.GetStringAsync("http://localhost/Pages/ShortCircuitPage?target=" + targetName);
+
+            // Assert
+            Assert.Equal("From ShortCircuitPage.cshtml", content);
         }
 
         private async Task AddAntiforgeryHeaders(HttpRequestMessage request)
